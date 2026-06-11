@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MIRA – Medical Intelligence Robotic Automation</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="15" stroke="#00C9A7" stroke-width="2"/>
+          <path d="M10 16h4l2-5 3 10 2-5h3" stroke="#00C9A7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">MIRA</div>
+        <div class="brand-sub">Medical Intelligence Robotic Automation</div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btnAddNew">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add Patient
+    </button>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-card">
+    <div class="stat-value" id="totalCount">0</div>
+    <div class="stat-label">Total Patients</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="highRiskCount">–</div>
+    <div class="stat-label">High Glucose</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="avgCholesterol">–</div>
+    <div class="stat-label">Avg Cholesterol</div>
+  </div>
+</div>
+
+<main class="main">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#8892a4" stroke-width="1.5"/><path d="m11 11 3 3" stroke="#8892a4" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search by name or email…"/>
+    </div>
+    <div class="record-count" id="recordCount">Loading…</div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="patient-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Full Name</th>
+          <th>Date of Birth</th>
+          <th>Email</th>
+          <th>Glucose<span class="unit">mg/dL</span></th>
+          <th>Haemoglobin<span class="unit">g/dL</span></th>
+          <th>Cholesterol<span class="unit">mg/dL</span></th>
+          <th>AI Remarks</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="patientBody">
+        <tr class="empty-row"><td colspan="9">Loading patients…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add Patient</h2>
+      <button class="modal-close" id="modalClose">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="patientForm" autocomplete="off">
+      <input type="hidden" id="patientId"/>
+      <div class="form-row two-col">
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" placeholder="e.g. Priya Sharma" required/>
+        </div>
+        <div class="form-group">
+          <label for="dob">Date of Birth</label>
+          <input type="date" id="dob" required/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="e.g. priya@example.com" required/>
+      </div>
+      <div class="form-row three-col">
+        <div class="form-group">
+          <label for="glucose">Glucose <span class="unit-label">mg/dL</span></label>
+          <input type="number" id="glucose" step="0.1" min="0" placeholder="e.g. 95" required/>
+          <div class="field-hint">Normal: 70–100</div>
+        </div>
+        <div class="form-group">
+          <label for="haemoglobin">Haemoglobin <span class="unit-label">g/dL</span></label>
+          <input type="number" id="haemoglobin" step="0.1" min="0" placeholder="e.g. 14.5" required/>
+          <div class="field-hint">Normal: 12–17.5</div>
+        </div>
+        <div class="form-group">
+          <label for="cholesterol">Cholesterol <span class="unit-label">mg/dL</span></label>
+          <input type="number" id="cholesterol" step="0.1" min="0" placeholder="e.g. 180" required/>
+          <div class="field-hint">Normal: &lt;200</div>
+        </div>
+      </div>
+      <div class="ai-notice">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#00C9A7" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="#00C9A7" stroke-width="1.5" stroke-linecap="round"/></svg>
+        AI Remarks will be automatically generated from blood test values using Claude AI.
+      </div>
+      <div id="formErrors" class="form-errors" style="display:none"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <span id="submitText">Save Patient</span>
+          <span id="submitSpinner" class="spinner" style="display:none"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="remarksOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>AI Health Remarks</h2>
+      <button class="modal-close" id="remarksClose">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="remarks-patient-name" id="remarksPatientName"></div>
+    <div class="remarks-body" id="remarksBody"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="remarksOk">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Delete Patient</h2>
+    </div>
+    <p class="delete-message">Are you sure you want to delete <strong id="deletePatientName"></strong>? This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="deleteCancelBtn">Cancel</button>
+      <button class="btn-danger" id="deleteConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
